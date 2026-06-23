@@ -17,13 +17,10 @@
     --active-bk: #2558cc;
     --text:      #ffffff;
     --muted:     rgba(255,255,255,0.25);
-    --dimmed:    rgba(255,255,255,0.10);
     --font-mono: "SF Mono", ui-monospace, monospace;
     --font-sans: -apple-system, "Helvetica Neue", sans-serif;
   }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   html, body {
     width: 100%; height: 100%;
     background: var(--bg);
@@ -33,23 +30,18 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: none;
   }
-
   #app {
     display: flex;
     flex-direction: column;
-    height: 100dvh;
-    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+    height: 100%;
+    /* safe-area はフォールバック付きで */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-
-  /* ── ヘッダー ── */
   #header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px 10px;
     flex-shrink: 0;
+    padding: 14px 20px 10px;
   }
-
   #logo {
     font-family: var(--font-mono);
     font-size: 13px;
@@ -58,8 +50,6 @@
     color: var(--muted);
     text-transform: uppercase;
   }
-
-  /* ── 音名表示エリア ── */
   #display {
     flex: 1;
     display: flex;
@@ -70,76 +60,59 @@
     padding: 0 24px;
     min-height: 0;
   }
-
   #note-label {
     font-family: var(--font-mono);
-    font-size: clamp(44px, 14vw, 80px);
+    font-size: 72px;
     font-weight: 100;
     letter-spacing: -0.02em;
     color: var(--text);
     line-height: 1;
-    transition: font-size 0.1s;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
   }
-
-  #note-label.chord {
-    font-size: clamp(26px, 7vw, 44px);
-  }
-
+  #note-label.chord { font-size: 36px; }
   #note-sublabel {
     font-size: 12px;
     color: var(--muted);
     letter-spacing: 0.08em;
     font-family: var(--font-mono);
   }
-
-  /* ── オクターブセレクタ ── */
   #octave-row {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 16px;
-    padding: 14px 0;
-    flex-shrink: 0;
+    padding: 12px 0;
   }
-
   .oct-btn {
-    width: 44px; height: 44px;
+    width: 48px; height: 48px;
     border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
-    font-size: 18px;
+    font-size: 22px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
-    transition: background 0.1s, opacity 0.1s;
   }
-  .oct-btn:active { background: #2a2a2a; }
   .oct-btn.disabled { opacity: 0.2; pointer-events: none; }
-
   #octave-label {
     font-family: var(--font-mono);
     font-size: 15px;
     color: var(--text);
     width: 90px;
     text-align: center;
-    letter-spacing: 0.05em;
   }
-
-  /* ── 鍵盤エリア ── */
+  /* 鍵盤ラッパー: 固定高さ、幅は全幅 */
   #keyboard-wrap {
     flex-shrink: 0;
-    padding: 0 10px 10px;
     height: 200px;
-    position: relative;
-    touch-action: none;
+    padding: 0 10px 16px;
   }
-
   #keyboard {
     position: relative;
     width: 100%;
@@ -148,36 +121,29 @@
     user-select: none;
     -webkit-user-select: none;
   }
-
-  /* 白鍵・黒鍵は JS で position:absolute して描画 */
   .wkey, .bkey {
     position: absolute;
     top: 0;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.04s;
     touch-action: none;
   }
-
   .wkey {
     background: var(--white-key);
     border: 1px solid rgba(0,0,0,0.18);
     height: 100%;
   }
   .wkey.active { background: var(--active); }
-
   .bkey {
     background: var(--black-key);
     height: 62%;
     z-index: 2;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 -2px 3px rgba(255,255,255,0.04);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6);
   }
   .bkey.active { background: var(--active-bk); }
-
-  /* 白鍵のCラベル */
   .key-label {
     position: absolute;
-    bottom: 8px;
+    bottom: 7px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 10px;
@@ -186,319 +152,252 @@
     pointer-events: none;
     white-space: nowrap;
   }
-  .wkey.active .key-label { color: rgba(255,255,255,0.7); }
+  .wkey.active .key-label { color: rgba(255,255,255,0.8); }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="header">
-    <span id="logo">EarPiano</span>
-  </div>
-
+  <div id="header"><span id="logo">EarPiano</span></div>
   <div id="display">
     <div id="note-label">---</div>
     <div id="note-sublabel">押している音</div>
   </div>
-
   <div id="octave-row">
     <div class="oct-btn" id="oct-down">‹</div>
     <div id="octave-label">Octave 4</div>
     <div class="oct-btn" id="oct-up">›</div>
   </div>
-
   <div id="keyboard-wrap">
     <div id="keyboard"></div>
   </div>
 </div>
 
 <script>
-// ============================================================
-// AudioEngine
-// iOS Safari: ユーザー操作後に AudioContext を生成する必要がある
-// ============================================================
-
+// ── Audio ─────────────────────────────────────────────
 let ctx = null;
-const oscillators = {}; // midi -> { osc, gain }
+const oscs = {};
 
 const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 
 function ensureCtx() {
   if (ctx) return;
   ctx = new (window.AudioContext || window.webkitAudioContext)();
-  // iOS: resumeが必要なケースがある
   if (ctx.state === 'suspended') ctx.resume();
 }
 
-function midiToFreq(midi) {
-  return 440 * Math.pow(2, (midi - 69) / 12);
-}
-
-function midiToName(midi) {
-  const oct = Math.floor(midi / 12) - 1;
-  return NOTE_NAMES[midi % 12] + oct;
-}
+function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+function midiToName(m) { return NOTE_NAMES[m % 12] + (Math.floor(m / 12) - 1); }
 
 function noteOn(midi) {
-  if (oscillators[midi]) return;
+  if (oscs[midi]) return;
   ensureCtx();
-
-  const freq = midiToFreq(midi);
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
-
-  // 正弦波 + 倍音でピアノっぽく
   osc.type = 'custom';
   const real = new Float32Array([0, 1, 0.28, 0.08, 0.02]);
   const imag = new Float32Array(real.length);
   osc.setPeriodicWave(ctx.createPeriodicWave(real, imag));
-  osc.frequency.value = freq;
-
+  osc.frequency.value = midiToFreq(midi);
   gain.gain.setValueAtTime(0, ctx.currentTime);
   gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + 0.008);
-
   osc.connect(gain);
   gain.connect(ctx.destination);
   osc.start();
-
-  oscillators[midi] = { osc, gain };
+  oscs[midi] = { osc, gain };
 }
 
 function noteOff(midi) {
-  const o = oscillators[midi];
+  const o = oscs[midi];
   if (!o) return;
-  const { gain } = o;
-  gain.gain.setTargetAtTime(0, ctx.currentTime, 0.06);
-  setTimeout(() => {
-    try { o.osc.stop(); } catch(e) {}
-    delete oscillators[midi];
-  }, 400);
+  o.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.06);
+  setTimeout(() => { try { o.osc.stop(); } catch(e){} delete oscs[midi]; }, 400);
 }
 
-// ============================================================
-// 鍵盤レイアウト
-// ============================================================
-
-const WHITE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
-// 黒鍵: [半音インデックス, 白鍵何番目の右寄り]
-const BLACK_NOTES = [
-  { s: 1,  pos: 0.65 },
-  { s: 3,  pos: 1.65 },
-  { s: 6,  pos: 3.65 },
-  { s: 8,  pos: 4.65 },
-  { s: 10, pos: 5.65 },
-];
+// ── Layout ────────────────────────────────────────────
+const WHITE_S = [0, 2, 4, 5, 7, 9, 11];
+const BLACK_N = [{s:1,p:0.65},{s:3,p:1.65},{s:6,p:3.65},{s:8,p:4.65},{s:10,p:5.65}];
 
 let octave = 4;
-let keyElements = []; // { el, midi, isBlack }
+let keyEls = []; // { el, midi }
 
 function buildKeyboard() {
   const kb = document.getElementById('keyboard');
   kb.innerHTML = '';
-  keyElements = [];
+  keyEls = [];
 
   const totalW = kb.offsetWidth;
+  // offsetWidthが0なら少し待って再試行
+  if (totalW === 0) {
+    setTimeout(buildKeyboard, 50);
+    return;
+  }
+
   const gap    = 1;
   const whiteW = (totalW - gap * 6) / 7;
   const blackW = whiteW * 0.60;
 
-  // 白鍵
-  WHITE_SEMITONES.forEach((s, i) => {
+  WHITE_S.forEach((s, i) => {
     const midi = (octave + 1) * 12 + s;
     const el   = document.createElement('div');
     el.className = 'wkey';
     el.style.left  = (i * (whiteW + gap)) + 'px';
     el.style.width = whiteW + 'px';
-
-    // Cだけラベル
     if (s === 0) {
       const lbl = document.createElement('span');
-      lbl.className = 'key-label';
+      lbl.className   = 'key-label';
       lbl.textContent = midiToName(midi);
       el.appendChild(lbl);
     }
-
     kb.appendChild(el);
-    keyElements.push({ el, midi, isBlack: false });
+    keyEls.push({ el, midi });
   });
 
-  // 黒鍵
-  BLACK_NOTES.forEach(({ s, pos }) => {
+  BLACK_N.forEach(({ s, p }) => {
     const midi = (octave + 1) * 12 + s;
     const el   = document.createElement('div');
     el.className = 'bkey';
-    const x = pos * (whiteW + gap) - blackW / 2;
-    el.style.left  = x + 'px';
+    el.style.left  = (p * (whiteW + gap) - blackW / 2) + 'px';
     el.style.width = blackW + 'px';
     kb.appendChild(el);
-    keyElements.push({ el, midi, isBlack: true });
+    keyEls.push({ el, midi });
   });
 }
 
-// ============================================================
-// ヒットテスト（黒鍵優先）
-// ============================================================
-
-function hitTest(x, y) {
+// ── Hit test ──────────────────────────────────────────
+function hitTest(clientX, clientY) {
   const kb   = document.getElementById('keyboard');
   const rect = kb.getBoundingClientRect();
-  const lx   = x - rect.left;
-  const ly   = y - rect.top;
+  const lx   = clientX - rect.left;
+  const ly   = clientY - rect.top;
 
-  // 後ろから（黒鍵が後ろにあるので優先される）
-  for (let i = keyElements.length - 1; i >= 0; i--) {
-    const { el, midi } = keyElements[i];
-    const kr = el.getBoundingClientRect();
-    const klx = kr.left - rect.left;
-    const kly = kr.top  - rect.top;
-    if (lx >= klx && lx <= klx + kr.width &&
-        ly >= kly && ly <= kly + kr.height) {
+  for (let i = keyEls.length - 1; i >= 0; i--) {
+    const { el, midi } = keyEls[i];
+    const r = el.getBoundingClientRect();
+    if (lx >= r.left - rect.left && lx <= r.right  - rect.left &&
+        ly >= r.top  - rect.top  && ly <= r.bottom - rect.top) {
       return midi;
     }
   }
   return null;
 }
 
-// ============================================================
-// 音名表示
-// ============================================================
-
-const pressedMidis = new Set();
+// ── Display ───────────────────────────────────────────
+const pressed = new Set();
 
 function updateDisplay() {
-  const label    = document.getElementById('note-label');
-  const sublabel = document.getElementById('note-sublabel');
-
-  if (pressedMidis.size === 0) {
+  const label = document.getElementById('note-label');
+  const sub   = document.getElementById('note-sublabel');
+  if (pressed.size === 0) {
     label.textContent = '---';
     label.classList.remove('chord');
-    sublabel.textContent = '押している音';
+    sub.textContent = '押している音';
   } else {
-    const sorted = [...pressedMidis].sort((a, b) => a - b);
+    const sorted = [...pressed].sort((a, b) => a - b);
     label.textContent = sorted.map(midiToName).join('  ');
-    if (pressedMidis.size > 1) {
-      label.classList.add('chord');
-      sublabel.textContent = `${pressedMidis.size}音`;
-    } else {
-      label.classList.remove('chord');
-      sublabel.textContent = '押している音';
-    }
+    label.classList.toggle('chord', pressed.size > 1);
+    sub.textContent = pressed.size > 1 ? `${pressed.size}音` : '押している音';
   }
 }
 
-function keyActivate(midi) {
+function activate(midi) {
+  if (midi == null) return;
   noteOn(midi);
-  pressedMidis.add(midi);
-  const k = keyElements.find(k => k.midi === midi);
+  pressed.add(midi);
+  const k = keyEls.find(k => k.midi === midi);
   if (k) k.el.classList.add('active');
   updateDisplay();
 }
 
-function keyDeactivate(midi) {
+function deactivate(midi) {
+  if (midi == null) return;
   noteOff(midi);
-  pressedMidis.delete(midi);
-  const k = keyElements.find(k => k.midi === midi);
+  pressed.delete(midi);
+  const k = keyEls.find(k => k.midi === midi);
   if (k) k.el.classList.remove('active');
   updateDisplay();
 }
 
-// ============================================================
-// マルチタッチハンドラ
-// ============================================================
+// ── Touch ─────────────────────────────────────────────
+const tmap = {}; // touchId -> midi
 
-const touchMap = {}; // touchId -> midi
+const kb = document.getElementById('keyboard');
 
-document.getElementById('keyboard').addEventListener('touchstart', e => {
+kb.addEventListener('touchstart', e => {
   e.preventDefault();
   for (const t of e.changedTouches) {
     const midi = hitTest(t.clientX, t.clientY);
     if (midi == null) continue;
-    touchMap[t.identifier] = midi;
-    keyActivate(midi);
+    tmap[t.identifier] = midi;
+    activate(midi);
   }
 }, { passive: false });
 
-document.getElementById('keyboard').addEventListener('touchmove', e => {
+kb.addEventListener('touchmove', e => {
   e.preventDefault();
   for (const t of e.changedTouches) {
     const newMidi = hitTest(t.clientX, t.clientY);
-    const oldMidi = touchMap[t.identifier];
+    const oldMidi = tmap[t.identifier];
     if (newMidi === oldMidi) continue;
-
-    // 離鍵（他の指が同じキーを押してなければ）
     if (oldMidi != null) {
-      const stillPressed = Object.entries(touchMap)
-        .some(([id, m]) => m === oldMidi && Number(id) !== t.identifier);
-      if (!stillPressed) keyDeactivate(oldMidi);
+      const still = Object.entries(tmap).some(([id, m]) => m === oldMidi && Number(id) !== t.identifier);
+      if (!still) deactivate(oldMidi);
     }
-
-    // 押鍵
     if (newMidi != null) {
-      touchMap[t.identifier] = newMidi;
-      keyActivate(newMidi);
+      tmap[t.identifier] = newMidi;
+      activate(newMidi);
     } else {
-      delete touchMap[t.identifier];
+      delete tmap[t.identifier];
     }
   }
 }, { passive: false });
 
-function touchRelease(e) {
+function onTouchEnd(e) {
   e.preventDefault();
   for (const t of e.changedTouches) {
-    const midi = touchMap[t.identifier];
+    const midi = tmap[t.identifier];
+    delete tmap[t.identifier];
     if (midi == null) continue;
-    delete touchMap[t.identifier];
-    const stillPressed = Object.values(touchMap).includes(midi);
-    if (!stillPressed) keyDeactivate(midi);
+    const still = Object.values(tmap).includes(midi);
+    if (!still) deactivate(midi);
   }
 }
-document.getElementById('keyboard').addEventListener('touchend',    touchRelease, { passive: false });
-document.getElementById('keyboard').addEventListener('touchcancel', touchRelease, { passive: false });
+kb.addEventListener('touchend',    onTouchEnd, { passive: false });
+kb.addEventListener('touchcancel', onTouchEnd, { passive: false });
 
-// ============================================================
-// マウス対応（Mac/PCでのデバッグ用）
-// ============================================================
-
-let mouseDown = false;
-let mouseMidi = null;
-
-document.getElementById('keyboard').addEventListener('mousedown', e => {
-  mouseDown = true;
+// ── Mouse (デスクトップ確認用) ────────────────────────
+let mdown = false, mmidi = null;
+kb.addEventListener('mousedown', e => {
+  mdown = true;
   const midi = hitTest(e.clientX, e.clientY);
-  if (midi == null) return;
-  mouseMidi = midi;
-  keyActivate(midi);
+  mmidi = midi;
+  activate(midi);
 });
 document.addEventListener('mousemove', e => {
-  if (!mouseDown) return;
+  if (!mdown) return;
   const midi = hitTest(e.clientX, e.clientY);
-  if (midi === mouseMidi) return;
-  if (mouseMidi != null) keyDeactivate(mouseMidi);
-  if (midi != null) keyActivate(midi);
-  mouseMidi = midi;
+  if (midi === mmidi) return;
+  deactivate(mmidi);
+  activate(midi);
+  mmidi = midi;
 });
 document.addEventListener('mouseup', () => {
-  mouseDown = false;
-  if (mouseMidi != null) { keyDeactivate(mouseMidi); mouseMidi = null; }
+  mdown = false;
+  deactivate(mmidi);
+  mmidi = null;
 });
 
-// ============================================================
-// オクターブ切り替え
-// ============================================================
-
+// ── Octave ────────────────────────────────────────────
 function updateOctaveUI() {
   document.getElementById('octave-label').textContent = `Octave ${octave}`;
   document.getElementById('oct-down').classList.toggle('disabled', octave <= 1);
-  document.getElementById('oct-up').classList.toggle('disabled', octave >= 7);
+  document.getElementById('oct-up').classList.toggle('disabled',   octave >= 7);
 }
 
-function changeOctave(delta) {
-  const next = octave + delta;
+function changeOctave(d) {
+  const next = octave + d;
   if (next < 1 || next > 7) return;
-
-  // 押中のノートをすべてリセット
-  [...pressedMidis].forEach(keyDeactivate);
-  Object.keys(touchMap).forEach(id => delete touchMap[id]);
-
+  [...pressed].forEach(deactivate);
+  Object.keys(tmap).forEach(id => delete tmap[id]);
   octave = next;
   updateOctaveUI();
   buildKeyboard();
@@ -507,22 +406,17 @@ function changeOctave(delta) {
 document.getElementById('oct-down').addEventListener('click', () => changeOctave(-1));
 document.getElementById('oct-up').addEventListener('click',   () => changeOctave(+1));
 
-// ============================================================
-// 初期化
-// ============================================================
-
-window.addEventListener('load', () => {
-  buildKeyboard();
-  updateOctaveUI();
-  // 画面スリープ防止（WakeLock API）
-  if ('wakeLock' in navigator) {
-    navigator.wakeLock.request('screen').catch(() => {});
-  }
+// ── Init ──────────────────────────────────────────────
+// requestAnimationFrame でレイアウト確定後に鍵盤を描画
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    buildKeyboard();
+    updateOctaveUI();
+  });
 });
 
-// リサイズ時に鍵盤再構築
 window.addEventListener('resize', () => {
-  [...pressedMidis].forEach(keyDeactivate);
+  [...pressed].forEach(deactivate);
   buildKeyboard();
 });
 </script>
