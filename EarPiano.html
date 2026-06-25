@@ -30,58 +30,129 @@
     height: 100%;
     padding: env(safe-area-inset-top,20px) 0 env(safe-area-inset-bottom,8px);
   }
-  /* ヘッダー */
-  #hdr { flex-shrink:0; padding:10px 18px 6px; }
-  #logo { font-family:var(--mono); font-size:11px; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; }
 
-  /* 音名表示 */
-  #display { flex-shrink:0; display:flex; flex-direction:column; align-items:center; padding:6px 0 10px; gap:4px; }
-  #note { font-family:var(--mono); font-size:60px; font-weight:100; line-height:1; white-space:nowrap; max-width:94vw; overflow:hidden; text-overflow:ellipsis; text-align:center; transition:font-size .1s; }
-  #note.chord { font-size:30px; }
-  #sub  { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.08em; }
+  /* ── トップバー（ロゴ＋音名、1行に） ── */
+  #topbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    gap: 12px;
+  }
+  #logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: var(--muted);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  #note {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: .04em;
+    color: var(--text);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #note.dim { color: var(--muted); }
 
-  /* オクターブ */
-  #oct-row { flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:14px; padding:6px 0 10px; }
-  .obtn { width:44px; height:44px; border-radius:10px; border:1px solid rgba(255,255,255,.08); background:var(--surface); color:var(--text); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; -webkit-user-select:none; }
-  .obtn.off { opacity:.18; pointer-events:none; }
-  #oct-lbl { font-family:var(--mono); font-size:14px; width:110px; text-align:center; }
+  /* ── オクターブ ── */
+  #oct-row {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 4px 0 6px;
+  }
+  .obtn {
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    border: 1px solid rgba(255,255,255,.08);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .obtn.off { opacity: .18; pointer-events: none; }
+  #oct-lbl {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    width: 90px;
+    text-align: center;
+  }
 
-  /* 鍵盤エリア */
-  #kbs { flex:1; display:flex; gap:6px; padding:0 10px 10px; min-height:0; }
-  .col { flex:1; display:flex; flex-direction:column; gap:4px; min-width:0; }
-  .clbl { font-family:var(--mono); font-size:11px; color:var(--muted); text-align:center; flex-shrink:0; }
-  .kb { flex:1; position:relative; min-height:0; border-radius:6px; }
+  /* ── 鍵盤エリア ── */
+  #kbs {
+    flex: 1;
+    display: flex;
+    gap: 6px;
+    padding: 0 10px 10px;
+    min-height: 0;
+  }
+  .col { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .clbl { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: center; flex-shrink: 0; }
+  .kb { flex: 1; position: relative; min-height: 0; }
 
   /* 鍵 */
-  .wk, .bk { position:absolute; left:0; border-radius:5px; cursor:pointer; }
-  .wk { background:var(--white); border:1px solid rgba(0,0,0,.15); width:100%; }
-  .wk.on { background:var(--act-w); }
-  .bk { background:var(--black); z-index:2; box-shadow:-3px 3px 8px rgba(0,0,0,.7); }
-  .bk.on { background:var(--act-b); }
-  .wlbl { position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:var(--mono); font-size:9px; color:rgba(0,0,0,.28); pointer-events:none; }
-  .wlbl-top { bottom:auto; top:5px; }
-  .wk.on .wlbl { color:rgba(255,255,255,.75); }
+  .wk, .bk { position: absolute; left: 0; cursor: pointer; }
+  .wk {
+    background: var(--white);
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 4px;
+    width: 100%;
+  }
+  .wk.on { background: var(--act-w); }
+  .bk {
+    background: var(--black);
+    border-radius: 3px;
+    z-index: 2;
+    box-shadow: -2px 2px 6px rgba(0,0,0,.8);
+  }
+  .bk.on { background: var(--act-b); }
+
+  /* Cのラベル */
+  .wlbl {
+    position: absolute;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 8px;
+    color: rgba(0,0,0,.3);
+    pointer-events: none;
+    line-height: 1;
+  }
+  .wlbl.top    { top: 3px; }
+  .wlbl.bottom { bottom: 3px; }
+  .wk.on .wlbl { color: rgba(255,255,255,.7); }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="hdr"><span id="logo">EarPiano</span></div>
-  <div id="display">
-    <div id="note">---</div>
-    <div id="sub">押している音</div>
+  <div id="topbar">
+    <span id="logo">EarPiano</span>
+    <div id="note" class="dim">---</div>
   </div>
   <div id="oct-row">
     <div class="obtn" id="od">‹</div>
-    <div id="oct-lbl">Oct 3 · 4</div>
+    <div id="oct-lbl">Oct 3–5 / 4–6</div>
     <div class="obtn" id="ou">›</div>
   </div>
   <div id="kbs">
     <div class="col">
-      <div class="clbl" id="ll">Oct 3</div>
+      <div class="clbl" id="ll"></div>
       <div class="kb" id="kl"></div>
     </div>
     <div class="col">
-      <div class="clbl" id="lr">Oct 4</div>
+      <div class="clbl" id="lr"></div>
       <div class="kb" id="kr"></div>
     </div>
   </div>
@@ -95,73 +166,79 @@ const NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 
 function initAC() {
   if (AC) return;
-  try {
-    AC = new (window.AudioContext || window.webkitAudioContext)();
-    if (AC.state === 'suspended') AC.resume();
-  } catch(e) {}
+  try { AC = new (window.AudioContext || window.webkitAudioContext)();
+        if (AC.state==='suspended') AC.resume(); } catch(e) {}
 }
 function midi2freq(m) { return 440 * Math.pow(2,(m-69)/12); }
 function midi2name(m) { return NAMES[m%12] + (Math.floor(m/12)-1); }
 
 function noteOn(midi) {
-  if (oscs[midi]) return;
   initAC(); if (!AC) return;
-  const osc = AC.createOscillator();
-  const gain = AC.createGain();
+  if (oscs[midi]) {
+    try { oscs[midi].osc.stop(); } catch(e) {}
+    delete oscs[midi];
+  }
+  const osc = AC.createOscillator(), gain = AC.createGain();
   try {
     osc.setPeriodicWave(AC.createPeriodicWave(
-      new Float32Array([0,1,.28,.08,.02]),
-      new Float32Array(5)
-    ));
-  } catch(e) { osc.type = 'sine'; }
+      new Float32Array([0,1,.28,.08,.02]), new Float32Array(5)));
+  } catch(e) { osc.type='sine'; }
   osc.frequency.value = midi2freq(midi);
   gain.gain.setValueAtTime(0, AC.currentTime);
   gain.gain.linearRampToValueAtTime(0.22, AC.currentTime+0.008);
   osc.connect(gain); gain.connect(AC.destination); osc.start();
-  oscs[midi] = {osc, gain};
+  oscs[midi] = {osc, gain, releasing:false};
 }
 function noteOff(midi) {
   const o = oscs[midi]; if (!o) return;
+  o.releasing = true;
   if (AC) o.gain.gain.setTargetAtTime(0, AC.currentTime, 0.07);
-  setTimeout(() => { try{o.osc.stop();}catch(e){} delete oscs[midi]; }, 500);
+  setTimeout(() => { if (oscs[midi]===o) { try{o.osc.stop();}catch(e){} delete oscs[midi]; } }, 500);
 }
 
-// ── レイアウト定義 ────────────────────────────
-// 白鍵: 下(C)→上(B) の順, index=0がC
-const WD = [{s:12},{s:11},{s:9},{s:7},{s:5},{s:4},{s:2},{s:0}]; // 高いC→C（高音=上）
-// 黒鍵: between = 下からの白鍵index（between=0はCとDの間）
-const BD = [{s:10,b:1},{s:8,b:2},{s:6,b:3},{s:3,b:5},{s:1,b:6}]; // 高音側から
+// ── 2オクターブ分のレイアウト定義 ─────────────
+// 高音→低音（上→下）の順
+// 上オクターブ: highC B A G F E D (middleC) + 下オクターブ: B A G F E D C
+const WD = [
+  {s:24},{s:23},{s:21},{s:19},{s:17},{s:16},{s:14}, // 上オクターブ白鍵
+  {s:12},                                             // ミドルC（境界）
+  {s:11},{s:9},{s:7},{s:5},{s:4},{s:2},{s:0}         // 下オクターブ白鍵
+]; // 15鍵
 
-// ── キーデータ（座標キャッシュ）─────────────
-// kd['l' or 'r'] = [{midi, x, y, w, h, el}]
+const BD = [
+  // 上オクターブ黒鍵（白鍵index間）
+  {s:22,b:1},{s:20,b:2},{s:18,b:3},{s:15,b:5},{s:13,b:6},
+  // 下オクターブ黒鍵
+  {s:10,b:8},{s:8,b:9},{s:6,b:10},{s:3,b:12},{s:1,b:13}
+]; // 10鍵
+
 const kd = {l:[], r:[]};
 let baseOct = 3;
 
 function buildCol(side, oct) {
-  const el = document.getElementById(side === 'l' ? 'kl' : 'kr');
-  el.innerHTML = '';
-  kd[side] = [];
+  const el = document.getElementById(side==='l'?'kl':'kr');
+  el.innerHTML = ''; kd[side] = [];
+  const W = el.offsetWidth, H = el.offsetHeight;
+  if (!W||!H) { setTimeout(()=>buildCol(side,oct),60); return; }
 
-  // サイズ取得（0なら再試行）
-  const W = el.offsetWidth;
-  const H = el.offsetHeight;
-  if (!W || !H) { setTimeout(() => buildCol(side, oct), 50); return; }
+  const gap = 1.2;
+  const wh  = (H - gap*14) / 15;  // 15白鍵, 14ギャップ
+  const bh  = wh * 0.95;           // 黒鍵高さ（またがる）
+  const bw  = W  * 0.52;           // 黒鍵幅
 
-  const gap = 1.5;
-  const wh  = (H - gap*7) / 8;   // 白鍵の高さ（C〜高いC = 8鍵）
-  const bh  = wh * 0.62;          // 黒鍵の高さ
-  const bw  = W * 0.52;           // 黒鍵の幅
-
-  // 白鍵（i=0=C が一番上 → 低音が上）
+  // 白鍵（i=0=highC が上、i=14=C が下）
   WD.forEach((def, i) => {
     const midi = (oct+1)*12 + def.s;
-    const y    = i * (wh + gap);   // 上から積む（低音=上）
+    const y    = i * (wh + gap);
     const div  = document.createElement('div');
     div.className = 'wk';
     div.style.cssText = `top:${y}px;height:${wh}px;width:${W}px;`;
-    if (def.s === 0 || def.s === 12) {
+
+    // C音（s=0,12,24）にラベル
+    if (def.s===0||def.s===12||def.s===24) {
       const lbl = document.createElement('span');
-      lbl.className = def.s === 12 ? 'wlbl wlbl-top' : 'wlbl';
+      // 上端のhighC→topラベル、それ以外→bottomラベル
+      lbl.className = 'wlbl ' + (def.s===24 ? 'top' : 'bottom');
       lbl.textContent = midi2name(midi);
       div.appendChild(lbl);
     }
@@ -169,179 +246,171 @@ function buildCol(side, oct) {
     kd[side].push({midi, x:0, y, w:W, h:wh, el:div});
   });
 
-  // 黒鍵（白鍵にまたがるよう配置）
-  // between=i → 白鍵 i と i+1 の境界をまたぐ
+  // 黒鍵（白鍵にまたがる）
   BD.forEach(def => {
-    const midi  = (oct+1)*12 + def.s;
-    const i     = def.b;
-    // 境界のY座標（白鍵 i の下端 + gap/2）
-    const boundary = i * (wh + gap) + wh + gap / 2;
-    // 黒鍵は境界を中心に上下両白鍵にまたがる
-    const bkH   = wh * 0.95;    // 白鍵とほぼ同高さ → 両側にはみ出す
-    const bkW   = W  * 0.52;    // 幅は列の52%（右寄せ）
-    const y     = boundary - bkH / 2;
-    const x     = 0;  // 左側に配置
-    const div   = document.createElement('div');
+    const midi     = (oct+1)*12 + def.s;
+    const i        = def.b;
+    const boundary = i*(wh+gap) + wh + gap/2;
+    const y        = boundary - bh/2;
+    const x        = 0; // 左端
+    const div  = document.createElement('div');
     div.className = 'bk';
-    div.style.cssText = `top:${y}px;height:${bkH}px;left:${x}px;width:${bkW}px;`;
+    div.style.cssText = `top:${y}px;height:${bh}px;left:${x}px;width:${bw}px;`;
     el.appendChild(div);
-    kd[side].push({midi, x, y, w:bkW, h:bkH, el:div});
+    kd[side].push({midi, x, y, w:bw, h:bh, el:div});
   });
 }
 
 function buildAll() {
-  buildCol('l', baseOct+1);  // 左列=高音
-  buildCol('r', baseOct);    // 右列=低音
-  document.getElementById('ll').textContent   = 'Oct '+(baseOct+1);
-  document.getElementById('lr').textContent   = 'Oct '+baseOct;
-  document.getElementById('oct-lbl').textContent = 'Oct '+baseOct+' · '+(baseOct+1);
+  // 右列=低音(baseOct)、左列=高音(baseOct+1)
+  buildCol('r', baseOct);
+  buildCol('l', baseOct+1);
+
+  // ラベル: 各列の音域を表示
+  const lo = baseOct, hi = baseOct+1;
+  document.getElementById('ll').textContent = `C${hi+1}–C${hi+3}`;
+  document.getElementById('lr').textContent = `C${lo+1}–C${lo+3}`;
+  document.getElementById('oct-lbl').textContent =
+    `C${lo+1}–C${lo+3} / C${hi+1}–C${hi+3}`;
   document.getElementById('od').classList.toggle('off', baseOct<=1);
-  document.getElementById('ou').classList.toggle('off', baseOct>=6);
+  document.getElementById('ou').classList.toggle('off', baseOct>=5);
 }
 
 // ── ヒットテスト ──────────────────────────────
-// 各列のBoundingRectを毎回取得し、内部座標で判定
 function hitTest(cx, cy) {
   for (const side of ['l','r']) {
-    const el   = document.getElementById(side==='l'?'kl':'kr');
+    const el = document.getElementById(side==='l'?'kl':'kr');
     const rect = el.getBoundingClientRect();
-    if (cx < rect.left || cx > rect.right || cy < rect.top || cy > rect.bottom) continue;
-    const lx = cx - rect.left;
-    const ly = cy - rect.top;
-    // 黒鍵優先（後ろから検索）
-    const keys = kd[side];
-    for (let i = keys.length-1; i >= 0; i--) {
-      const k = keys[i];
-      if (lx >= k.x && lx <= k.x+k.w && ly >= k.y && ly <= k.y+k.h) return k.midi;
+    if (cx<rect.left||cx>rect.right||cy<rect.top||cy>rect.bottom) continue;
+    const lx=cx-rect.left, ly=cy-rect.top;
+    const keys=kd[side];
+    for (let i=keys.length-1;i>=0;i--) {
+      const k=keys[i];
+      if (lx>=k.x&&lx<=k.x+k.w&&ly>=k.y&&ly<=k.y+k.h) return k.midi;
     }
   }
   return null;
 }
 
-// ── 押鍵状態管理 ─────────────────────────────
+// ── 押鍵管理 ──────────────────────────────────
 const pressed = new Set();
 
 function updateDisplay() {
   const n = document.getElementById('note');
-  const s = document.getElementById('sub');
   if (!pressed.size) {
-    n.textContent = '---'; n.classList.remove('chord'); s.textContent='押している音';
+    n.textContent='---'; n.classList.add('dim');
   } else {
-    const sorted = [...pressed].sort((a,b)=>a-b);
-    n.textContent = sorted.map(midi2name).join('  ');
-    n.classList.toggle('chord', pressed.size>1);
-    s.textContent = pressed.size>1 ? pressed.size+'音' : '押している音';
+    const sorted=[...pressed].sort((a,b)=>a-b);
+    n.textContent=sorted.map(midi2name).join('  ');
+    n.classList.remove('dim');
   }
 }
 
 function findEl(midi) {
   for (const side of ['l','r']) {
-    const k = kd[side].find(k=>k.midi===midi);
-    if (k) return k.el;
+    const k=kd[side].find(k=>k.midi===midi);
+    if(k) return k.el;
   }
   return null;
 }
 
 function activate(midi) {
-  if (midi==null || pressed.has(midi)) return;
+  if(midi==null||pressed.has(midi)) return;
   noteOn(midi); pressed.add(midi);
-  const el = findEl(midi); if (el) el.classList.add('on');
+  const el=findEl(midi); if(el) el.classList.add('on');
   updateDisplay();
 }
-
 function deactivate(midi) {
-  if (midi==null || !pressed.has(midi)) return;
+  if(midi==null||!pressed.has(midi)) return;
   noteOff(midi); pressed.delete(midi);
-  const el = findEl(midi); if (el) el.classList.remove('on');
+  const el=findEl(midi); if(el) el.classList.remove('on');
   updateDisplay();
 }
 
-// ── タッチ（documentレベルで捕捉）───────────
-// ※ 要素レベルより確実。iOS Safariでの取りこぼしを防ぐ
+function releaseAll() {
+  [...pressed].forEach(deactivate);
+  Object.keys(tmap).forEach(id=>delete tmap[id]);
+}
+
+// ── タッチ（documentレベル） ──────────────────
 const tmap = {};
 
-document.addEventListener('touchstart', e => {
-  // オクターブボタンは除外
-  if (e.target.closest('.obtn')) return;
+document.addEventListener('touchstart', e=>{
+  if(e.target.closest('.obtn')) return;
   e.preventDefault();
-  for (const t of e.changedTouches) {
-    const midi = hitTest(t.clientX, t.clientY);
-    if (midi==null) continue;
-    tmap[t.identifier] = midi;
-    activate(midi);
-  }
-}, {passive:false});
-
-document.addEventListener('touchmove', e => {
-  if (e.target.closest('.obtn')) return;
-  e.preventDefault();
-  for (const t of e.changedTouches) {
-    const newM = hitTest(t.clientX, t.clientY);
-    const oldM = tmap[t.identifier];
-    if (newM===oldM) continue;
-    if (oldM!=null) {
-      const still = Object.entries(tmap).some(([id,m])=>m===oldM && +id!==t.identifier);
-      if (!still) deactivate(oldM);
+  // 行方不明タッチ掃除
+  const live=new Set([...e.touches].map(t=>t.identifier));
+  for(const id in tmap) {
+    if(!live.has(+id)) {
+      const midi=tmap[id]; delete tmap[id];
+      if(!Object.values(tmap).includes(midi)) deactivate(midi);
     }
-    if (newM!=null) { tmap[t.identifier]=newM; activate(newM); }
+  }
+  for(const t of e.changedTouches) {
+    const midi=hitTest(t.clientX,t.clientY);
+    if(midi==null) continue;
+    tmap[t.identifier]=midi; activate(midi);
+  }
+},{passive:false});
+
+document.addEventListener('touchmove', e=>{
+  if(e.target.closest('.obtn')) return;
+  e.preventDefault();
+  for(const t of e.changedTouches) {
+    const newM=hitTest(t.clientX,t.clientY), oldM=tmap[t.identifier];
+    if(newM===oldM) continue;
+    if(oldM!=null) {
+      const still=Object.entries(tmap).some(([id,m])=>m===oldM&&+id!==t.identifier);
+      if(!still) deactivate(oldM);
+    }
+    if(newM!=null){tmap[t.identifier]=newM; activate(newM);}
     else delete tmap[t.identifier];
   }
-}, {passive:false});
+},{passive:false});
 
 function onEnd(e) {
-  for (const t of e.changedTouches) {
-    const midi = tmap[t.identifier];
-    delete tmap[t.identifier];
-    if (midi==null) continue;
-    const still = Object.values(tmap).includes(midi);
-    if (!still) deactivate(midi);
+  for(const t of e.changedTouches) {
+    const midi=tmap[t.identifier]; delete tmap[t.identifier];
+    if(midi==null) continue;
+    if(!Object.values(tmap).includes(midi)) deactivate(midi);
   }
+  if(e.touches.length===0&&pressed.size>0) releaseAll();
 }
-document.addEventListener('touchend',    onEnd, {passive:false});
-document.addEventListener('touchcancel', onEnd, {passive:false});
+document.addEventListener('touchend',    onEnd,{passive:false});
+document.addEventListener('touchcancel', onEnd,{passive:false});
 
-// ── マウス（デスクトップ・Claude preview用）──
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) releaseAll(); });
+window.addEventListener('blur', releaseAll);
+
+// ── マウス（デスクトップ確認用） ─────────────
 let mdown=false, mmidi=null;
-document.addEventListener('mousedown', e => {
-  if (e.target.closest('.obtn')) return;
-  mdown=true;
-  const midi = hitTest(e.clientX, e.clientY);
-  mmidi=midi; activate(midi);
+document.addEventListener('mousedown',e=>{
+  if(e.target.closest('.obtn')) return;
+  mdown=true; const midi=hitTest(e.clientX,e.clientY); mmidi=midi; activate(midi);
 });
-document.addEventListener('mousemove', e => {
-  if (!mdown) return;
-  const midi = hitTest(e.clientX, e.clientY);
-  if (midi===mmidi) return;
-  deactivate(mmidi); activate(midi); mmidi=midi;
+document.addEventListener('mousemove',e=>{
+  if(!mdown) return;
+  const midi=hitTest(e.clientX,e.clientY);
+  if(midi===mmidi) return; deactivate(mmidi); activate(midi); mmidi=midi;
 });
-document.addEventListener('mouseup', () => {
-  mdown=false; deactivate(mmidi); mmidi=null;
-});
+document.addEventListener('mouseup',()=>{ mdown=false; deactivate(mmidi); mmidi=null; });
 
 // ── オクターブ ────────────────────────────────
-document.getElementById('od').addEventListener('click', ()=>{
-  if (baseOct<=1) return;
-  [...pressed].forEach(deactivate); baseOct--; buildAll();
+document.getElementById('od').addEventListener('click',()=>{
+  if(baseOct<=1) return; [...pressed].forEach(deactivate); baseOct--; buildAll();
 });
-document.getElementById('ou').addEventListener('click', ()=>{
-  if (baseOct>=6) return;
-  [...pressed].forEach(deactivate); baseOct++; buildAll();
+document.getElementById('ou').addEventListener('click',()=>{
+  if(baseOct>=5) return; [...pressed].forEach(deactivate); baseOct++; buildAll();
 });
 
 // ── 初期化 ───────────────────────────────────
-// DOMContentLoaded + double rAF で確実にレイアウト後に実行
-function init() {
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    buildAll();
-  }));
-}
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+if(document.readyState==='loading') {
+  document.addEventListener('DOMContentLoaded',
+    ()=>requestAnimationFrame(()=>requestAnimationFrame(buildAll)));
 } else {
-  init();
+  requestAnimationFrame(()=>requestAnimationFrame(buildAll));
 }
-
-window.addEventListener('resize', ()=>{ [...pressed].forEach(deactivate); setTimeout(buildAll,100); });
+window.addEventListener('resize',()=>{ [...pressed].forEach(deactivate); setTimeout(buildAll,100); });
 </script>
 </body>
 </html>
