@@ -220,11 +220,21 @@ function noteOn(midi) {
 
 function noteOff(midi) {
   const v = pool.find(v => v.midi === midi); if (!v) return;
+  v.midi = null; // 即座に解放（setTimeoutを使わない → 競合なし）
   v.gain.gain.cancelScheduledValues(AC.currentTime);
   v.gain.gain.setValueAtTime(v.gain.gain.value, AC.currentTime);
   v.gain.gain.setTargetAtTime(0, AC.currentTime, 0.07);
-  // フェードアウト後にボイスを解放
-  setTimeout(() => { if (v.midi === midi) v.midi = null; }, 500);
+}
+
+function silenceAll() {
+  // プール全体を強制消音（stuck note の最終手段）
+  if (!AC) return;
+  pool.forEach(v => {
+    v.midi = null;
+    v.gain.gain.cancelScheduledValues(AC.currentTime);
+    v.gain.gain.setValueAtTime(v.gain.gain.value, AC.currentTime);
+    v.gain.gain.setTargetAtTime(0, AC.currentTime, 0.05);
+  });
 }
 
 // ── 2オクターブ分のレイアウト定義 ─────────────
@@ -364,9 +374,9 @@ function releaseTouch(id) {
 }
 
 function releaseAll() {
-  Object.keys(tmap).forEach(id=>releaseTouch(id));
-  // 残留があれば強制クリア
-  [...pressed].forEach(m=>{ noteOff(m); pressed.delete(m); });
+  Object.keys(tmap).forEach(id => releaseTouch(id));
+  [...pressed].forEach(m => { pressed.delete(m); });
+  silenceAll(); // tmap・pressed に残ってなくても全ボイスを消す
   updateDisplay();
 }
 
