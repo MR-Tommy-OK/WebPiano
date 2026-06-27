@@ -160,40 +160,71 @@
 
 <script>
 // ── Audio ─────────────────────────────────────
-let AC = null;
-const oscs = {};
+// ボイスプール方式: 起動時にオシレーターを事前生成しておき
+// noteOn/Off はゲインの変更のみ → 発音遅延を最小化
 const NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const POOL  = 12; // 同時発音の上限
+
+let AC   = null;
+let pool = []; // [{osc, gain, midi}]  midi=null なら空き
 
 function initAC() {
   if (AC) return;
-  try { AC = new (window.AudioContext || window.webkitAudioContext)();
-        if (AC.state==='suspended') AC.resume(); } catch(e) {}
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+  } catch(e) { return; }
+
+  // 倍音設定を1回だけ作成
+  let wave = null;
+  try {
+    wave = AC.createPeriodicWave(
+      new Float32Array([0, 1, 0.28, 0.08, 0.02]),
+      new Float32Array(5)
+    );
+  } catch(e) {}
+
+  // オシレーターをPOOL本まとめて起動（gain=0 で無音待機）
+  for (let i = 0; i < POOL; i++) {
+    const osc  = AC.createOscillator();
+    const gain = AC.createGain();
+    if (wave) { try { osc.setPeriodicWave(wave); } catch(e) { osc.type='sine'; } }
+    else { osc.type = 'sine'; }
+    gain.gain.value = 0;
+    osc.connect(gain);
+    gain.connect(AC.destination);
+    osc.start();
+    pool.push({ osc, gain, midi: null });
+  }
 }
-function midi2freq(m) { return 440 * Math.pow(2,(m-69)/12); }
-function midi2name(m) { return NAMES[m%12] + (Math.floor(m/12)-1); }
+
+function midi2freq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+function midi2name(m) { return NAMES[m % 12] + (Math.floor(m / 12) - 1); }
 
 function noteOn(midi) {
   initAC(); if (!AC) return;
-  if (oscs[midi]) {
-    try { oscs[midi].osc.stop(); } catch(e) {}
-    delete oscs[midi];
-  }
-  const osc = AC.createOscillator(), gain = AC.createGain();
-  try {
-    osc.setPeriodicWave(AC.createPeriodicWave(
-      new Float32Array([0,1,.28,.08,.02]), new Float32Array(5)));
-  } catch(e) { osc.type='sine'; }
-  osc.frequency.value = midi2freq(midi);
-  gain.gain.setValueAtTime(0, AC.currentTime);
-  gain.gain.linearRampToValueAtTime(0.22, AC.currentTime+0.008);
-  osc.connect(gain); gain.connect(AC.destination); osc.start();
-  oscs[midi] = {osc, gain, releasing:false};
+
+  // 既に同じmidiが鳴っていればそのボイスを再利用
+  let v = pool.find(v => v.midi === midi);
+  if (!v) v = pool.find(v => v.midi === null);   // 空きボイス
+  if (!v) v = pool.reduce((a, b) =>              // 空きなし→最小ゲインを奪う
+    a.gain.gain.value <= b.gain.gain.value ? a : b);
+
+  v.midi = midi;
+  v.osc.frequency.value = midi2freq(midi);
+  // スケジュール済みの変化をキャンセルしてから鳴らす
+  v.gain.gain.cancelScheduledValues(AC.currentTime);
+  v.gain.gain.setValueAtTime(v.gain.gain.value, AC.currentTime);
+  v.gain.gain.linearRampToValueAtTime(0.22, AC.currentTime + 0.008);
 }
+
 function noteOff(midi) {
-  const o = oscs[midi]; if (!o) return;
-  o.releasing = true;
-  if (AC) o.gain.gain.setTargetAtTime(0, AC.currentTime, 0.07);
-  setTimeout(() => { if (oscs[midi]===o) { try{o.osc.stop();}catch(e){} delete oscs[midi]; } }, 500);
+  const v = pool.find(v => v.midi === midi); if (!v) return;
+  v.gain.gain.cancelScheduledValues(AC.currentTime);
+  v.gain.gain.setValueAtTime(v.gain.gain.value, AC.currentTime);
+  v.gain.gain.setTargetAtTime(0, AC.currentTime, 0.07);
+  // フェードアウト後にボイスを解放
+  setTimeout(() => { if (v.midi === midi) v.midi = null; }, 500);
 }
 
 // ── 2オクターブ分のレイアウト定義 ─────────────
@@ -276,7 +307,8 @@ function buildAll() {
   document.getElementById('ou').classList.toggle('off', baseOct>=5);
 }
 
-// ── ヒットテスト ──────────────────────────────
+// ── ヒットテスト（{midi, el} を返す）────────
+// 視覚と音声を分離するため、押した鍵のelも返す
 function hitTest(cx, cy) {
   for (const side of ['l','r']) {
     const el = document.getElementById(side==='l'?'kl':'kr');
@@ -286,70 +318,69 @@ function hitTest(cx, cy) {
     const keys=kd[side];
     for (let i=keys.length-1;i>=0;i--) {
       const k=keys[i];
-      if (lx>=k.x&&lx<=k.x+k.w&&ly>=k.y&&ly<=k.y+k.h) return k.midi;
+      if (lx>=k.x&&lx<=k.x+k.w&&ly>=k.y&&ly<=k.y+k.h) return {midi:k.midi, el:k.el};
     }
   }
   return null;
 }
 
 // ── 押鍵管理 ──────────────────────────────────
-const pressed = new Set();
+// 視覚 → 押した鍵のelを直接操作（重複音域で反対側が光らない）
+// 音声 → MIDIで管理（同じ音は1つだけ鳴る）
+const pressed = new Set(); // 鳴っているMIDIのセット
 
 function updateDisplay() {
   const n = document.getElementById('note');
   if (!pressed.size) {
     n.textContent='---'; n.classList.add('dim');
   } else {
-    const sorted=[...pressed].sort((a,b)=>a-b);
-    n.textContent=sorted.map(midi2name).join('  ');
+    n.textContent=[...pressed].sort((a,b)=>a-b).map(midi2name).join('  ');
     n.classList.remove('dim');
   }
 }
 
-function findEl(midi) {
-  for (const side of ['l','r']) {
-    const k=kd[side].find(k=>k.midi===midi);
-    if(k) return k.el;
-  }
-  return null;
-}
+// tmap: touchId → {midi, el}  ※elは実際に押した鍵の要素
+const tmap = {};
 
-function activate(midi) {
-  if(midi==null||pressed.has(midi)) return;
-  noteOn(midi); pressed.add(midi);
-  const el=findEl(midi); if(el) el.classList.add('on');
+function pressKey(id, hit) {
+  tmap[id] = hit;
+  hit.el.classList.add('on');                   // 押した鍵だけ光らせる
+  if (!pressed.has(hit.midi)) {
+    noteOn(hit.midi); pressed.add(hit.midi);    // 同じ音が既に鳴ってなければ発音
+  }
   updateDisplay();
 }
-function deactivate(midi) {
-  if(midi==null||!pressed.has(midi)) return;
-  noteOff(midi); pressed.delete(midi);
-  const el=findEl(midi); if(el) el.classList.remove('on');
+
+function releaseTouch(id) {
+  const old = tmap[id]; if (!old) return;
+  delete tmap[id];
+  // 同じelを押している他のタッチがなければ消灯
+  if (!Object.values(tmap).some(e=>e.el===old.el)) old.el.classList.remove('on');
+  // 同じmidiを押している他のタッチがなければ消音
+  if (!Object.values(tmap).some(e=>e.midi===old.midi)) {
+    noteOff(old.midi); pressed.delete(old.midi);
+  }
   updateDisplay();
 }
 
 function releaseAll() {
-  [...pressed].forEach(deactivate);
-  Object.keys(tmap).forEach(id=>delete tmap[id]);
+  Object.keys(tmap).forEach(id=>releaseTouch(id));
+  // 残留があれば強制クリア
+  [...pressed].forEach(m=>{ noteOff(m); pressed.delete(m); });
+  updateDisplay();
 }
 
 // ── タッチ（documentレベル） ──────────────────
-const tmap = {};
-
 document.addEventListener('touchstart', e=>{
   if(e.target.closest('.obtn')) return;
   e.preventDefault();
   // 行方不明タッチ掃除
   const live=new Set([...e.touches].map(t=>t.identifier));
-  for(const id in tmap) {
-    if(!live.has(+id)) {
-      const midi=tmap[id]; delete tmap[id];
-      if(!Object.values(tmap).includes(midi)) deactivate(midi);
-    }
-  }
+  for(const id in tmap) { if(!live.has(+id)) releaseTouch(id); }
   for(const t of e.changedTouches) {
-    const midi=hitTest(t.clientX,t.clientY);
-    if(midi==null) continue;
-    tmap[t.identifier]=midi; activate(midi);
+    const hit=hitTest(t.clientX,t.clientY);
+    if(hit==null) continue;
+    pressKey(t.identifier, hit);
   }
 },{passive:false});
 
@@ -357,23 +388,17 @@ document.addEventListener('touchmove', e=>{
   if(e.target.closest('.obtn')) return;
   e.preventDefault();
   for(const t of e.changedTouches) {
-    const newM=hitTest(t.clientX,t.clientY), oldM=tmap[t.identifier];
-    if(newM===oldM) continue;
-    if(oldM!=null) {
-      const still=Object.entries(tmap).some(([id,m])=>m===oldM&&+id!==t.identifier);
-      if(!still) deactivate(oldM);
-    }
-    if(newM!=null){tmap[t.identifier]=newM; activate(newM);}
-    else delete tmap[t.identifier];
+    const newHit=hitTest(t.clientX,t.clientY);
+    const oldEntry=tmap[t.identifier];
+    // 同じ鍵ならスキップ
+    if(newHit&&oldEntry&&newHit.el===oldEntry.el) continue;
+    releaseTouch(t.identifier);
+    if(newHit) pressKey(t.identifier, newHit);
   }
 },{passive:false});
 
 function onEnd(e) {
-  for(const t of e.changedTouches) {
-    const midi=tmap[t.identifier]; delete tmap[t.identifier];
-    if(midi==null) continue;
-    if(!Object.values(tmap).includes(midi)) deactivate(midi);
-  }
+  for(const t of e.changedTouches) releaseTouch(t.identifier);
   if(e.touches.length===0&&pressed.size>0) releaseAll();
 }
 document.addEventListener('touchend',    onEnd,{passive:false});
@@ -383,24 +408,28 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden) releaseAl
 window.addEventListener('blur', releaseAll);
 
 // ── マウス（デスクトップ確認用） ─────────────
-let mdown=false, mmidi=null;
+let mdown=false, mhit=null;
 document.addEventListener('mousedown',e=>{
   if(e.target.closest('.obtn')) return;
-  mdown=true; const midi=hitTest(e.clientX,e.clientY); mmidi=midi; activate(midi);
+  mdown=true; mhit=hitTest(e.clientX,e.clientY);
+  if(mhit) pressKey('mouse', mhit);
 });
 document.addEventListener('mousemove',e=>{
   if(!mdown) return;
-  const midi=hitTest(e.clientX,e.clientY);
-  if(midi===mmidi) return; deactivate(mmidi); activate(midi); mmidi=midi;
+  const newHit=hitTest(e.clientX,e.clientY);
+  if(newHit&&mhit&&newHit.el===mhit.el) return;
+  releaseTouch('mouse');
+  if(newHit) pressKey('mouse', newHit);
+  mhit=newHit;
 });
-document.addEventListener('mouseup',()=>{ mdown=false; deactivate(mmidi); mmidi=null; });
+document.addEventListener('mouseup',()=>{ mdown=false; releaseTouch('mouse'); mhit=null; });
 
 // ── オクターブ ────────────────────────────────
 document.getElementById('od').addEventListener('click',()=>{
-  if(baseOct<=1) return; [...pressed].forEach(deactivate); baseOct--; buildAll();
+  if(baseOct<=1) return; releaseAll(); baseOct--; buildAll();
 });
 document.getElementById('ou').addEventListener('click',()=>{
-  if(baseOct>=5) return; [...pressed].forEach(deactivate); baseOct++; buildAll();
+  if(baseOct>=5) return; releaseAll(); baseOct++; buildAll();
 });
 
 // ── 初期化 ───────────────────────────────────
