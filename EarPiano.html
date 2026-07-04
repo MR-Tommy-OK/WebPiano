@@ -169,7 +169,11 @@ let AC   = null;
 let pool = []; // [{osc, gain, midi}]  midi=null なら空き
 
 function initAC() {
-  if (AC) return;
+  if (AC) {
+    // iOS はバックグラウンド後にサスペンドする → 毎回チェック
+    if (AC.state === 'suspended') AC.resume();
+    return;
+  }
   try {
     AC = new (window.AudioContext || window.webkitAudioContext)();
     if (AC.state === 'suspended') AC.resume();
@@ -414,7 +418,14 @@ function onEnd(e) {
 document.addEventListener('touchend',    onEnd,{passive:false});
 document.addEventListener('touchcancel', onEnd,{passive:false});
 
-document.addEventListener('visibilitychange',()=>{ if(document.hidden) releaseAll(); });
+document.addEventListener('visibilitychange',()=>{
+  if (document.hidden) {
+    releaseAll();
+  } else {
+    // 復帰時: サスペンド解除
+    if (AC && AC.state === 'suspended') AC.resume();
+  }
+});
 window.addEventListener('blur', releaseAll);
 
 // ── マウス（デスクトップ確認用） ─────────────
