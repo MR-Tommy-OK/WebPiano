@@ -9,8 +9,8 @@
   :root {
     --bg:      #0e0e0e;
     --surface: #1c1c1c;
-    --white:   #efefed;
-    --black:   #161616;
+    --white:   #3a3a3a;
+    --black:   #080808;
     --act-w:   #3d7fff;
     --act-b:   #1e4fcc;
     --text:    #fff;
@@ -103,7 +103,8 @@
   .kb { flex: 1; position: relative; min-height: 0; }
 
   /* 鍵 */
-  .wk, .bk { position: absolute; left: 0; cursor: pointer; }
+  .wk, .bk { position: absolute; cursor: pointer; }
+  .wk { left: 0; }
   .wk {
     background: var(--white);
     border: 1px solid rgba(0,0,0,.15);
@@ -175,7 +176,7 @@ function initAC() {
     return;
   }
   try {
-    AC = new (window.AudioContext || window.webkitAudioContext)();
+    AC = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
     if (AC.state === 'suspended') AC.resume();
   } catch(e) { return; }
 
@@ -242,19 +243,18 @@ function silenceAll() {
 }
 
 // ── 2オクターブ分のレイアウト定義 ─────────────
-// 高音→低音（上→下）の順
-// 上オクターブ: highC B A G F E D (middleC) + 下オクターブ: B A G F E D C
+// 低音→高音（上→下）の順
 const WD = [
-  {s:24},{s:23},{s:21},{s:19},{s:17},{s:16},{s:14}, // 上オクターブ白鍵
-  {s:12},                                             // ミドルC（境界）
-  {s:11},{s:9},{s:7},{s:5},{s:4},{s:2},{s:0}         // 下オクターブ白鍵
+  {s:0},{s:2},{s:4},{s:5},{s:7},{s:9},{s:11}, // 下オクターブ白鍵
+  {s:12},                                       // ミドルC（境界）
+  {s:14},{s:16},{s:17},{s:19},{s:21},{s:23},{s:24} // 上オクターブ白鍵
 ]; // 15鍵
+// i=0:C i=1:D i=2:E i=3:F i=4:G i=5:A i=6:B
+// i=7:midC i=8:D i=9:E i=10:F i=11:G i=12:A i=13:B i=14:highC
 
 const BD = [
-  // 上オクターブ黒鍵（白鍵index間）
-  {s:22,b:1},{s:20,b:2},{s:18,b:3},{s:15,b:5},{s:13,b:6},
-  // 下オクターブ黒鍵
-  {s:10,b:8},{s:8,b:9},{s:6,b:10},{s:3,b:12},{s:1,b:13}
+  {s:1,b:0},{s:3,b:1},{s:6,b:3},{s:8,b:4},{s:10,b:5},   // 下オクターブ黒鍵
+  {s:13,b:7},{s:15,b:8},{s:18,b:10},{s:20,b:11},{s:22,b:12} // 上オクターブ黒鍵
 ]; // 10鍵
 
 const kd = {l:[], r:[]};
@@ -277,13 +277,13 @@ function buildCol(side, oct) {
     const y    = i * (wh + gap);
     const div  = document.createElement('div');
     div.className = 'wk';
-    div.style.cssText = `top:${y}px;height:${wh}px;width:${W}px;`;
+    div.style.cssText = `position:absolute;top:${y}px;height:${wh}px;left:0;width:${W}px;`;
 
     // C音（s=0,12,24）にラベル
     if (def.s===0||def.s===12||def.s===24) {
       const lbl = document.createElement('span');
       // 上端のhighC→topラベル、それ以外→bottomラベル
-      lbl.className = 'wlbl ' + (def.s===24 ? 'top' : 'bottom');
+      lbl.className = 'wlbl ' + (def.s===0 ? 'top' : 'bottom');
       lbl.textContent = midi2name(midi);
       div.appendChild(lbl);
     }
@@ -297,24 +297,24 @@ function buildCol(side, oct) {
     const i        = def.b;
     const boundary = i*(wh+gap) + wh + gap/2;
     const y        = boundary - bh/2;
-    const x        = 0; // 左端
+    const x        = W - bw; // 右端
     const div  = document.createElement('div');
     div.className = 'bk';
-    div.style.cssText = `top:${y}px;height:${bh}px;left:${x}px;width:${bw}px;`;
+    div.style.cssText = `position:absolute;top:${y}px;height:${bh}px;left:${x}px;width:${bw}px;right:auto;`;
     el.appendChild(div);
-    kd[side].push({midi, x, y, w:bw, h:bh, el:div});
+    kd[side].push({midi, x, y, w:bw, h:bh, el:div}); // 黒鍵は右端
   });
 }
 
 function buildAll() {
-  // 右列=低音(baseOct)、左列=高音(baseOct+1)
-  buildCol('r', baseOct);
-  buildCol('l', baseOct+1);
+  // 左列=低音(baseOct)、右列=高音(baseOct+1)
+  buildCol('l', baseOct);
+  buildCol('r', baseOct+1);
 
   // ラベル: 各列の音域を表示
   const lo = baseOct, hi = baseOct+1;
-  document.getElementById('ll').textContent = `C${hi+1}–C${hi+3}`;
-  document.getElementById('lr').textContent = `C${lo+1}–C${lo+3}`;
+  document.getElementById('ll').textContent = `C${lo+1}–C${lo+3}`;
+  document.getElementById('lr').textContent = `C${hi+1}–C${hi+3}`;
   document.getElementById('oct-lbl').textContent =
     `C${lo+1}–C${lo+3} / C${hi+1}–C${hi+3}`;
   document.getElementById('od').classList.toggle('off', baseOct<=1);
@@ -460,7 +460,17 @@ if(document.readyState==='loading') {
 } else {
   requestAnimationFrame(()=>requestAnimationFrame(buildAll));
 }
-window.addEventListener('resize',()=>{ [...pressed].forEach(deactivate); setTimeout(buildAll,100); });
+window.addEventListener('resize',()=>{ releaseAll(); setTimeout(buildAll,100); });
+
+// 画面への最初のタッチでAudioContextを事前初期化
+// → 鍵盤を押したときには準備済みになる
+function warmup() {
+  initAC();
+  document.removeEventListener('touchstart', warmup);
+  document.removeEventListener('mousedown',  warmup);
+}
+document.addEventListener('touchstart', warmup, { passive: true, capture: true });
+document.addEventListener('mousedown',  warmup, { passive: true, capture: true });
 </script>
 </body>
 </html>
